@@ -4,7 +4,7 @@ import pygame
 import pytest
 
 from weather_display.preview import NOW, event_sample, sample
-from weather_display.renderer import save_event_preview, save_preview
+from weather_display.renderer import _format_sunset, save_event_preview, save_preview
 
 
 @pytest.mark.parametrize("scenario", ["day","night","rain","fog","extreme","long-location","stale","no-data"])
@@ -26,6 +26,10 @@ def test_weather_scenarios_change_color_theme(tmp_path):
         save_preview(path,settings,weather,NOW,error)
         colors.append(pygame.image.load(path).get_at((0,0))[:3])
     assert len(set(colors))==3
+
+def test_sunset_uses_selected_clock_format():
+    assert _format_sunset("2026-08-14T20:01", "12h") == "8:01 PM"
+    assert _format_sunset("2026-08-14T20:01", "24h") == "20:01"
 
 @pytest.mark.parametrize("scenario", ["events","events-long","events-stale","events-unavailable"])
 def test_event_preview_scenarios_are_deterministic_and_exact_size(tmp_path, scenario):

@@ -20,6 +20,7 @@ def sample(scenario: str) -> tuple[Settings, WeatherSnapshot | None, str | None]
         temperature=18.4, apparent_temperature=17.8, high=21.2, low=13.7,
         weather_code=1, is_day=True, wind_speed=14.2, wind_direction=248,
         wind_gusts=25.1, uv_index=5.4, precipitation_probability=8,
+        sunset="2026-08-14T20:01",
         temperature_unit="°C", wind_unit="km/h")
     error = None
     if scenario == "night": base = replace(base, weather_code=0, is_day=False)

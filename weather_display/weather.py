@@ -32,13 +32,16 @@ class WeatherSnapshot:
     wind_gusts: float
     uv_index: float
     precipitation_probability: int
+    sunset: str | None
     temperature_unit: str
     wind_unit: str
 
     @classmethod
     def from_dict(cls, value: dict) -> "WeatherSnapshot":
         try:
-            return cls(**{name: value[name] for name in cls.__dataclass_fields__})
+            cached = dict(value)
+            cached.setdefault("sunset", None)
+            return cls(**{name: cached[name] for name in cls.__dataclass_fields__})
         except (KeyError, TypeError, ValueError) as exc:
             raise WeatherError("invalid cached weather") from exc
 
@@ -60,7 +63,7 @@ class OpenMeteoProvider:
                                   "is_day", "wind_speed_10m", "wind_direction_10m",
                                   "wind_gusts_10m", "uv_index")),
             "hourly": "precipitation_probability",
-            "daily": "temperature_2m_max,temperature_2m_min",
+            "daily": "temperature_2m_max,temperature_2m_min,sunset",
             "forecast_days": 1,
             "temperature_unit": "fahrenheit" if imperial else "celsius",
             "wind_speed_unit": "mph" if imperial else "kmh",
@@ -83,6 +86,7 @@ class OpenMeteoProvider:
                 wind_direction=float(current["wind_direction_10m"]),
                 wind_gusts=float(current["wind_gusts_10m"]), uv_index=float(current["uv_index"]),
                 precipitation_probability=int(hourly["precipitation_probability"][index]),
+                sunset=str(daily["sunset"][0]),
                 temperature_unit="°F" if imperial else "°C", wind_unit="mph" if imperial else "km/h",
             )
         except (requests.RequestException, KeyError, IndexError, TypeError, ValueError) as exc:

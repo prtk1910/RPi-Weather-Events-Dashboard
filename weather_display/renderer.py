@@ -47,6 +47,9 @@ class DashboardRenderer:
         local = local_datetime(now, settings.timezone)
         self._text(_truncate(settings.location_label, 18), 24, TEXT, (12, 4))
         self._text(local.strftime("%a, %b %-d"), 20, MUTED, (12, 33))
+        if weather and weather.sunset:
+            self._text(f"Sunset {_format_sunset(weather.sunset, settings.clock_format)}",
+                       18, self.theme["warm"], (12, 56))
         clock = format_clock(now, settings.timezone, settings.clock_format)
         clock_font = 48 if settings.clock_format == "12h" else 68
         self._text(clock, clock_font, TEXT, (468, 0), anchor="topright")
@@ -239,6 +242,11 @@ def _truncate(value: str, count: int) -> str:
 def _parse_time(value: str) -> datetime:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def _format_sunset(value: str, clock_format: str) -> str:
+    sunset = datetime.fromisoformat(value)
+    return sunset.strftime("%-I:%M %p" if clock_format == "12h" else "%H:%M")
 
 
 def _event_detail(event: Event, include_day: bool) -> str:

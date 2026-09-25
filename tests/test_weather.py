@@ -12,7 +12,8 @@ BODY = {
                 "apparent_temperature":17.8, "weather_code":1, "is_day":1,
                 "wind_speed_10m":14.2, "wind_direction_10m":248,
                 "wind_gusts_10m":25.1, "uv_index":5.4},
-    "daily": {"temperature_2m_max":[21.2], "temperature_2m_min":[13.7]},
+    "daily": {"temperature_2m_max":[21.2], "temperature_2m_min":[13.7],
+              "sunset":["2026-08-14T20:01"]},
     "hourly": {"time":["2026-08-14T11:00","2026-08-14T12:00"],
                "precipitation_probability":[4,8]},
 }
@@ -39,6 +40,8 @@ def test_fetch_both_unit_systems(units,temp_unit,wind_unit,temp_param,wind_param
     params=session.calls[0][1]["params"]
     assert params["temperature_unit"]==temp_param and params["wind_speed_unit"]==wind_param
     assert result.precipitation_probability == 8
+    assert result.sunset == "2026-08-14T20:01"
+    assert "sunset" in params["daily"]
 
 @pytest.mark.parametrize("response,error", [(Response({}),None),(Response({"current":{}}),None),
                                                (None,requests.Timeout("slow"))])
@@ -57,6 +60,12 @@ def test_service_persists_success_and_falls_back_to_cache(tmp_path):
 def test_startup_without_cache_survives_failure(tmp_path):
     service=WeatherService(StateStore(tmp_path),OpenMeteoProvider(Session(error=requests.Timeout())))
     assert service.refresh(Settings()) is False and service.snapshot is None
+
+def test_legacy_cache_without_sunset_still_loads(tmp_path):
+    cached = OpenMeteoProvider(Session()).fetch(Settings()).to_dict()
+    cached.pop("sunset")
+    store = StateStore(tmp_path); store.save_cache(cached)
+    assert WeatherService(store, OpenMeteoProvider(Session())).snapshot.sunset is None
 
 def test_location_search_shape():
     body={"results":[{"name":"Rincon Hill","admin1":"California","country":"United States",
